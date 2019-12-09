@@ -1,7 +1,7 @@
 type IhandleErr = (err: any) => [null | Error, any];
 type IhandleSinglePromise = (promise: Promise<any>) => Promise<[null | Error, any]>;
 type IhandleMultiplePromises = (promises: Array<Promise<any>>) => Promise<[null | Error, any]>;
-export type Iuntil = (promises: Array<Promise<any>> | Promise<any>) => Promise<[null | Error, any]>;
+type Iuntil = (promises: Array<Promise<any>> | Promise<any>) => Promise<[null | Error, any]>;
 
 
 const handleErr: IhandleErr = function handleErr(err: any): [null | Error, any] {
@@ -20,6 +20,7 @@ const handleMultiplePromises: IhandleMultiplePromises = function handleMultipleP
 	return Promise.all(promises).then(data => [null, data], handleErr);
 }
 
+
 export function until(promises: Array<Promise<any>> | Promise<any>): Promise<[null | Error, any]> {
 	if(Array.isArray(promises)) {
 		const isAllPromises = promises.every(p => typeof p.then === 'function');
@@ -33,12 +34,8 @@ export function until(promises: Array<Promise<any>> | Promise<any>): Promise<[nu
 }
 
 export function s(promises: Array<Promise<any>> | Promise<any>): Promise<[null | Error, any]> {
-	return until(promises);
+	return this.until(promises);
 }
-
-const mod = { until, s };
-
-export default mod;
 
 
 

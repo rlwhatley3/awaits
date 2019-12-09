@@ -6,7 +6,7 @@
   "typings": "dist/awaits.d.ts",
   "scripts": {
     "prepublish": "npm run build",
-    "test": "jest",
+    "test": "npm run build && jest",
     "build": "npm run clean && tsc",
     "clean": "rm -rf dist"
   },
