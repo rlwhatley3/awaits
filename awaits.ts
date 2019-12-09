@@ -36,6 +36,10 @@ export function s(promises: Array<Promise<any>> | Promise<any>): Promise<[null |
 	return until(promises);
 }
 
+const mod = { until, s };
+
+export default mod;
+
 
 
 
