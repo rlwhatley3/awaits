@@ -2,6 +2,10 @@
 
 A small helper function which resolves promises or arrays of promises to a tuple of [null | Error, data]
 
+### installation
+
+> npm i -s awaits-until
+
 ### usage
 
 	import { until, s } from 'awaits';
