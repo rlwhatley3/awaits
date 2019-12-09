@@ -1,0 +1,23 @@
+{
+    "include": [
+    	"./**/*",
+    	"./lib/**/*"
+    ],
+    "exclude": [
+    	"./node_modules",
+    	"package-lock.json",
+        "**/*.spec.ts"
+    ],
+    "compilerOptions": {
+        "noImplicitAny": true,
+        "target": "es6",
+        "outDir": "./dist",
+        "pretty": true,
+        "experimentalDecorators": true,
+        "declaration": true,
+        "esModuleInterop": true,
+        "moduleResolution": "node",
+        "sourceMap": true,
+        "checkJs": false
+    }
+}

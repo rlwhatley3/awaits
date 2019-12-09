@@ -1,0 +1,30 @@
+{
+  "name": "awaits",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./dist/awaits.js",
+  "typings": "/awaits.d.ts",
+  "scripts": {
+    "prestart": "npm run build",
+    "prepublish": "npm run build",
+    "test": "jest",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rlwhatley3/awaits.git"
+  },
+  "author": "raymond whatley",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rlwhatley3/awaits/issues"
+  },
+  "homepage": "https://github.com/rlwhatley3/awaits#readme",
+  "devDependencies": {
+    "@types/jest": "^24.0.23",
+    "@types/node": "^12.12.14",
+    "jest": "^24.9.0",
+    "ts-jest": "^24.2.0",
+    "typescript": "^3.7.3"
+  }
+}
