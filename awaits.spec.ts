@@ -1,9 +1,9 @@
 
 // build checking
-import { until, s } from './dist/awaits.js'
+// import { until, s } from './dist/awaits.js'
 
 // direct ts checking
-// import { until, s } from './awaits';
+import { until, s } from './awaits';
 
 const BEARSTR = 'da-bears';
 
