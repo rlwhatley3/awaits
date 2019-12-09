@@ -1,9 +1,9 @@
 {
-  "name": "awaits",
+  "name": "awaits-until",
   "version": "1.0.0",
   "description": "",
   "main": "./dist/awaits.js",
-  "typings": "/awaits.d.ts",
+  "typings": "./dist/awaits.d.ts",
   "scripts": {
     "prestart": "npm run build",
     "prepublish": "npm run build",
