@@ -1,5 +1,5 @@
 
-import { until, s } from './awaits'
+import { until, s } from './dist/awaits.js'
 
 const BEARSTR = 'bears';
 

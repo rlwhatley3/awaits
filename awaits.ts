@@ -1,12 +1,10 @@
-
-type AwaitsReturn = [null | Error, any];
-type IhandleErr = (err: any) => AwaitsReturn;
-type IhandleSinglePromise = (promise: Promise<any>) => Promise<AwaitsReturn>;
-type IhandleMultiplePromises = (promises: Array<Promise<any>>) => Promise<AwaitsReturn>;
+type IhandleErr = (err: any) => [null | Error, any];
+type IhandleSinglePromise = (promise: Promise<any>) => Promise<[null | Error, any]>;
+type IhandleMultiplePromises = (promises: Array<Promise<any>>) => Promise<[null | Error, any]>;
 export type Iuntil = (promises: Array<Promise<any>> | Promise<any>) => Promise<[null | Error, any]>;
 
 
-const handleErr: IhandleErr = function handleErr(err: any): AwaitsReturn {
+const handleErr: IhandleErr = function handleErr(err: any): [null | Error, any] {
 	if(err instanceof Error) {
 		return [err, null];
 	} else {
@@ -14,15 +12,15 @@ const handleErr: IhandleErr = function handleErr(err: any): AwaitsReturn {
 	}
 }
 
-const handleSinglePromise: IhandleSinglePromise = function handleSinglePromise(promise: Promise<any>): Promise<AwaitsReturn> {
+const handleSinglePromise: IhandleSinglePromise = function handleSinglePromise(promise: Promise<any>): Promise<[null | Error, any]> {
 	return promise.then(data => [null, data], handleErr);
 }
 
-const handleMultiplePromises: IhandleMultiplePromises = function handleMultiplePromises(promises: Array<Promise<any>>): Promise<AwaitsReturn> {
+const handleMultiplePromises: IhandleMultiplePromises = function handleMultiplePromises(promises: Array<Promise<any>>): Promise<[null | Error, any]> {
 	return Promise.all(promises).then(data => [null, data], handleErr);
 }
 
-const until:Iuntil = function until(promises: Array<Promise<any>> | Promise<any>): Promise<AwaitsReturn> {
+export function until(promises: Array<Promise<any>> | Promise<any>): Promise<[null | Error, any]> {
 	if(Array.isArray(promises)) {
 		const isAllPromises = promises.every(p => typeof p.then === 'function');
 		if(!isAllPromises) return Promise.resolve(handleErr('Invalid promise given to Until array.'))
@@ -34,13 +32,9 @@ const until:Iuntil = function until(promises: Array<Promise<any>> | Promise<any>
 	}
 }
 
-const s:Iuntil = function s(promises: Array<Promise<any>> | Promise<any>): Promise<AwaitsReturn> {
+export function s(promises: Array<Promise<any>> | Promise<any>): Promise<[null | Error, any]> {
 	return until(promises);
 }
-
-module.exports = { until, s }
-
-// export { until, s }
 
 
 
