@@ -42,7 +42,7 @@ const handleMultiplePromises: IhandleMultiplePromises = function handleMultipleP
 }
 
 /**
- * resolves a promise or promises then returns a formatted tuple
+ * Resolves a promise or an array of promises and returns a tuple: [err, data]
  * @param a promise or an array of promises to be resolved
  * @return a Promise which resolves to a tuple of type [null | Error, any]
  */
@@ -59,7 +59,7 @@ export function until(promises: Array<Promise<any>> | Promise<any>): Promise<[nu
 }
 
 /**
- * resolves a promise or promises then returns a formatted tuple
+ * Resolves a promise or an array of promises and returns a tuple: [err, data]
  * @param a promise or an array of promises to be resolved
  * @return a Promise which resolves to a tuple of type [null | Error, any]
  */
