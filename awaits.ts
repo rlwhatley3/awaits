@@ -26,7 +26,7 @@ export function until(promises: Array<Promise<any>> | Promise<any>): Promise<[nu
 		const isAllPromises = promises.every(p => typeof p.then === 'function');
 		if(!isAllPromises) return Promise.resolve(handleErr('Invalid promise given to Until array.'))
 		return handleMultiplePromises(promises);
-	} else if(typeof promises.then === 'function') {
+	} else if(promises && typeof promises.then === 'function') {
 		return handleSinglePromise(promises);
 	} else {
 		return Promise.resolve(handleErr('Until function only accepts arguments of type Promise<any>, or Array<Promise<any>>.'));

@@ -5,7 +5,7 @@ import { until, s } from './dist/awaits.js'
 // direct ts checking
 // import { until, s } from './awaits';
 
-const BEARSTR = 'bears';
+const BEARSTR = 'da-bears';
 
 const promiseFactory = (resolves: number = 0, rejects: number = 0) => {
 	let ret = [];
