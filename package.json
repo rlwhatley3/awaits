@@ -3,7 +3,7 @@
   "version": "3.4.0",
   "description": "resolves promises to an err, data tuple",
   "main": "dist/awaits.js",
-  "typings": "dist/awaits.d.ts",
+  "types": "dist/awaits.d.ts",
   "scripts": {
     "prepublish": "npm run build",
     "test": "npm run build && jest",
