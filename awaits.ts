@@ -38,7 +38,9 @@ const s:Iuntil = function s(promises: Array<Promise<any>> | Promise<any>): Promi
 	return until(promises);
 }
 
-module.exports = { until, s }
+// module.exports = { until, s }
+
+export { until, s }
 
 
 
