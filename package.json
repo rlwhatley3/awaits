@@ -1,6 +1,6 @@
 {
   "name": "awaits-until",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "resolves promises to an err, data tuple",
   "main": "dist/awaits.js",
   "typings": "dist/awaits.d.ts",
