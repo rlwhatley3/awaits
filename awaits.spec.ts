@@ -210,9 +210,9 @@ describe('unzip: when passed an object with promises for values', () => {
 		it('should have the rejected promise on the key value store', async () => {
 			let mC = 2;
 			let pObj = {
-				"A": promiseFactory(0, 1)[0],
-				"B": promiseFactory(1, 1),
-				"C": promiseFactory(mC, 0)
+				A: promiseFactory(0, 1)[0],
+				B: promiseFactory(1, 1),
+				C: promiseFactory(mC, 0)
 			}
 			let data = await unzip(pObj);
 			expect(data._valid).toEqual(true);

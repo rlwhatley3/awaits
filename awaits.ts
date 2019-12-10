@@ -111,8 +111,8 @@ export async function unzip(promiseObj: { [key: string]: Promise<any> | Array<Pr
 
 
 /**
- * Resolves a key value store of Promises
- * @param a promise or an array of promises to be resolved
+ * Resolves a key value store of Promises to values
+ * @param a key value store with only promises or an array of promises as values
  * @return a Promise which resolves to a tuple of type [null | Error, ResolvedInputObj]
  */
 export async function zip(promiseObj: { [key: string]: Promise<any> | Array<Promise<any>> }): Promise<[null | Error, { [key: string]: any }]> {
