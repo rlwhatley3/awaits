@@ -1,22 +1,22 @@
 
 // build checking
-// import { until, s, zip, unzip } from './dist/awaits.js'
+import { until, s, zip, unzip } from './dist/awaits.js'
 
 // direct ts checking
-import { until, s, zip, unzip } from './awaits';
+// import { until, s, zip, unzip } from './awaits';
 
 type pFactory = (resolves: number, rejects: number) => Array<Promise<string>>;
 
 const BEARSTR = 'da-bears';
 
-const promiseFactory:pFactory = (resolves: number = 0, rejects: number = 0): Array<Promise<string>> => {
+const promiseFactory:pFactory = (resolves: number = 0, rejects: number = 0): Array<Promise<any>> => {
 	let ret = [];
 	for(let i = 0; i < resolves; i++) {
-		ret.push(Promise.resolve(BEARSTR));
+		ret.push(new Promise((resolve, reject) => { setTimeout(() => { resolve(BEARSTR) }, 500) }))
 	}
 
 	for(let j = 0; j < rejects; j++) {
-		ret.push(Promise.reject(BEARSTR));
+		ret.push(new Promise((resolve, reject) => { setTimeout(() => { reject(BEARSTR) }, 500) }))
 	}
 
 	return ret;
@@ -214,8 +214,11 @@ describe('unzip: when passed an object with promises for values', () => {
 				B: promiseFactory(1, 1),
 				C: promiseFactory(mC, 0)
 			}
+
 			let data = await unzip(pObj);
+
 			expect(data._valid).toEqual(true);
+
 			for(let key in data) {
 				expect(Array.isArray(data[key])).toEqual(true);
 				expect(data[key].length).toEqual(2);

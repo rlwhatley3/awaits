@@ -13,7 +13,7 @@ type IvalidRet = { [key: string]: any, _valid?: boolean };
  * @param error of any type
  * @return a tuple of type [Error, null]
  */
-const handleErr: IhandleErr = function handleErr(err: any): [Error, null] {
+const handleErr: IhandleErr = function handleErr(err: any = ''): [Error, null] {
 	return err instanceof Error ? [err, null] : [new Error(err), null];
 }
 
@@ -78,7 +78,7 @@ export function s(promises: Array<Promise<any>> | Promise<any>): Promise<[null |
  * @note use _valid to check if the object was unzippable
  */
 export async function unzip(promiseObj: { [key: string]: Promise<any> | Array<Promise<any>> }): Promise<{ [key: string]: any, _valid?: boolean }> {
-
+	
 	let obj:IvalidRet = { ...promiseObj };
 
 	Object.defineProperty(obj, "_valid", {
