@@ -20,6 +20,7 @@
         "esModuleInterop": true,
         "moduleResolution": "node",
         "sourceMap": true,
-        "checkJs": false
+        "checkJs": false,
+        "lib": ["es2020"]
     }
 }

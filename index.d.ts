@@ -11,6 +11,13 @@
  */
 // export declare function s(promises: Array<Promise<any>> | Promise<any>): Promise<[null | Error, any]>;
 /**
+/**
+ * Resolves an array of promises and returns a tuple: [err, data]
+ * @param an array of promises to be resolved
+ * @return a Promise which resolves to a tuple of type [null | Array<Error>, null | Array<any>]
+ */
+// export declare function sAllSettled(promises: Array<Promise<any>>): Promise<[null | Array<Error>, null | Array<any>]>;
+/**
  * Resolves a key value store of Promises
  * @param a promise or an array of promises to be resolved
  * @return a key value store of the same shape as the input. Each value is a resolved tuple of [null, data]

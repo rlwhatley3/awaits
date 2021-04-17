@@ -1,11 +1,12 @@
 
 // build checking
-import { until, s, zip, unzip, series } from './dist/awaits.js'
+import { until, s, zip, unzip, series, sAllSettled } from './dist/awaits.js'
 
 // direct ts checking
-// import { until, s, zip, unzip, series } from './awaits';
+// import { until, s, zip, unzip, series, sAllSettled } from './awaits';
 
 type pFactory = (resolves: number, rejects: number) => Array<Promise<string>>;
+type eFactory = (nonErrors: number, trueErrors: number) => Array<Promise<string>>;
 
 const RESOLVESTR = 'da-bears';
 const REJECTSTR = 'rejected-da-bears';
@@ -20,6 +21,24 @@ const promiseFactory:pFactory = (resolves: number = 0, rejects: number = 0): Arr
 
 	for(let j = 0; j < rejects; j++) {
 		let p = new Promise((resolve, reject) => { setTimeout(() => { return reject(REJECTSTR) }, 800) });
+		p.catch(() => {})
+		ret.push(p)
+	}
+
+	return ret;
+}
+
+const errorFactory:eFactory = (nonErrors: number, trueErrors: number): Array<Promise<any>> => {
+	let ret = [];
+	const ham:any = {};
+
+	for(let i = 0; i < nonErrors; i++) {
+		let p = new Promise((resolve, reject) => { setTimeout(() => { return reject(REJECTSTR) }, 800) });
+		ret.push(p)
+	}
+
+	for(let j = 0; j < trueErrors; j++) {
+		let p = new Promise((resolve, reject) => { setTimeout(() => { return reject(new RangeError) }, 800) });
 		p.catch(() => {})
 		ret.push(p)
 	}
@@ -387,6 +406,39 @@ describe('series', () => {
 		});
 	});
 
+	describe('sAllSettled', () => {
+		it('should return errors and data in the tuple', async () => {
+			let resolveCount = 1;
+			let rejectCount = 1;
+
+			let p = promiseFactory(resolveCount, rejectCount);
+
+			let [err, data] = await sAllSettled(p);
+			expect(err.length).toEqual(rejectCount);
+			expect(data.length).toEqual(resolveCount);
+			expect(err[0] instanceof Error).toEqual(true);
+		});
+
+		it('should return null data when only errors are returned', async () => {
+			let resolveCount = 0;
+			let rejectCount = 2;
+			let p = promiseFactory(resolveCount, rejectCount);
+			let [err, data] = await sAllSettled(p);
+			expect(err.length).toEqual(rejectCount);
+			expect(err[0].message).toEqual(REJECTSTR);
+			expect(Object.is(data, null)).toEqual(true);
+		});
+
+		it('should return null errors when no errors are returned', async () => {
+			let resolveCount = 2;
+			let rejectCount = 0;
+			let p = promiseFactory(resolveCount, rejectCount);
+			let [err, data] = await sAllSettled(p);
+			expect(data.length).toEqual(resolveCount);
+			expect(Object.is(err, null)).toEqual(true);
+			expect(data[0]).toEqual(RESOLVESTR);
+		});
+	});
 });
 
 
