@@ -42,9 +42,37 @@ note: on any promise rejection, the first position of the tuple will be an Error
     
     // mData will be an array of the resolved values
   }()
-```   
+```
+
+#
+
+
+#### sAllSettled
+params(1): an array of promises
+
+return: a tuble of type [ null | Array<Error>, null | Array<any> ]
     
+```
+import { sAllSettled } from 'awaits-until'
+
+  async function go() {
+    let promise1 = new Promise((resolve, reject) => { resolve('this resolved') });
+
+    let promise2 = new Promise((resolve, reject) => { reject('some message') });
+
+    let dbCalls = [promise1, promise2];
+
+    const [err, data] = await s(dbCalls);
     
+    // err is [Error] // Error.message -> 'some message'
+
+    // data is ['this resolved']
+    
+  }()
+
+```
+
+
  #   
     
 #### zip

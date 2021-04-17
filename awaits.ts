@@ -6,6 +6,7 @@ type IhandleObjPromises = (promiseObj: IpromiseObj) => Promise<[null | Error, an
 type IhandleSinglePromise = (promise: Promise<any> | IpromiseObj) => Promise<[null | Error, any]>;
 type IhandleMultiplePromises = (promises: Array<Promise<any>>) => Promise<[null | Error, any]>;
 type IhandleMixedPromises = (promises: Array<any>) => Promise<[null | Error, any]>;
+type IhandleAllSettledPromises = (promises: Array<Promise<any>>) => Promise<[null | Array<Error>, null | Array<any>]>;
 type Iuntil = (promises: Array<Promise<any>> | Promise<any> | any, promisesOnly: boolean) => Promise<[null | Error, any]>;
 type IvalidRet = { [key: string]: any, _valid?: boolean };
 type Iiterator = (value: any, key: string | number, accumulator: any) => Promise<void | Iiterable>;
@@ -19,7 +20,17 @@ type Iiterable = { [K in string | number]: any }
  * @return a tuple of type [Error, null]
  */
 const handleErr: IhandleErr = function handleErr(err: any = ''): [Error, null] {
-	return err instanceof Error ? [err, null] : [new Error(err), null];
+	return [formatErr(err), null];
+}
+
+const formatErr: any = function formatErr(err: any = ''): Error {
+	if(err instanceof Error || (err && err.hasOwnProperty('message') &&
+                            				 err.hasOwnProperty('stack'))
+		) {
+		return err;
+	} else {
+		return new Error(err);
+	}
 }
 
 /**
@@ -90,6 +101,29 @@ const handleSinglePromise: IhandleSinglePromise = function handleSinglePromise(p
  */
 const handleMultiplePromises: IhandleMultiplePromises = function handleMultiplePromises(promises: Array<Promise<any>>): Promise<[null | Error, any]> {
 	return Promise.all(promises).then(handleData, handleErr);
+}
+
+/**
+ * resolves all promises given using promise.allSettled
+ * @param an array of Promises
+ * @return a Promise that resolves to a tuple of the rejected and resolved values
+ */
+const handleAllSettledPromises: IhandleAllSettledPromises = async function handleAllSettledPromises(promises: Array<Promise<any>>): Promise<[null | Array<Error>, null | Array<any> ]> {
+	const settled: Array<any> = await Promise.allSettled(promises);
+
+	const rejected: Array<Error> = settled.map(r => {
+		if (r.status == 'rejected') {
+			return formatErr(r.reason);
+		}
+	}).filter(Boolean);
+
+	const resolved: Array<any> = settled.map(r => {
+		if(r.status == 'fulfilled') {
+			return r.value;
+		}
+	}).filter(Boolean);
+
+	return [rejected.length ? rejected : null, resolved.length ? resolved : null];
 }
 
 
@@ -254,6 +288,13 @@ export async function series(iterable: Iiterable, iterator:Iiterator = null, ini
 	return Promise.resolve(handleErrsAndData({ errs, data }));
 }
 
+export async function sAllSettled(promises: Array<Promise<any>>) {
+	if(!Array.isArray(promises) || !promises.length || !promises.every(p => typeof p.then === 'function')) {
+		return Promise.resolve(handleErr('sAllSettled function requires an array of promises'));
+	}
+
+	return handleAllSettledPromises(promises);
+}
 
 
 

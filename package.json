@@ -1,6 +1,6 @@
 {
   "name": "awaits-until",
-  "version": "7.0.0",
+  "version": "8.0.0",
   "description": "resolves promises to an err, data tuple",
   "main": "dist/awaits.js",
   "types": "dist/awaits.d.ts",
@@ -27,7 +27,7 @@
     "@types/node": "^12.12.14",
     "jest": "^24.9.0",
     "ts-jest": "^24.2.0",
-    "typescript": "^3.7.3"
+    "typescript": "^3.9.9"
   },
   "babel": {
     "test": {
