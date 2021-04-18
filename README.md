@@ -50,7 +50,7 @@ note: on any promise rejection, the first position of the tuple will be an Error
 #### sAllSettled
 params(1): an array of promises
 
-return: a tuble of type [ null | Array<Error>, null | Array<any> ]
+return: a tuble of type [ null | Array<{ reason: string, indexRef: number, status: string }>, null | Array<any> ]
     
 ```
 import { sAllSettled } from 'awaits-until'
@@ -62,11 +62,12 @@ import { sAllSettled } from 'awaits-until'
 
     let dbCalls = [promise1, promise2];
 
-    const [err, data] = await s(dbCalls);
+    const [errors, data] = await s(dbCalls);
     
-    // err is [Error] // Error.message -> 'some message'
+    // errors is an array of the standard allSettled failure objects, with the indexRef to the initially given array
+    // so in this scenario, promise 2 is a failure (dbcalls[1]), so the indexRef for the error that is present in the array will be 1
 
-    // data is ['this resolved']
+    // data is an array of purely resolved values, with no wrapping object: ie. ['this resolved']
     
   }()
 

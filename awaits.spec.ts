@@ -414,9 +414,10 @@ describe('series', () => {
 			let p = promiseFactory(resolveCount, rejectCount);
 
 			let [err, data] = await sAllSettled(p);
+
 			expect(err.length).toEqual(rejectCount);
+			expect(err[0].indexRef).toEqual(1)
 			expect(data.length).toEqual(resolveCount);
-			expect(err[0] instanceof Error).toEqual(true);
 		});
 
 		it('should return null data when only errors are returned', async () => {
@@ -424,8 +425,9 @@ describe('series', () => {
 			let rejectCount = 2;
 			let p = promiseFactory(resolveCount, rejectCount);
 			let [err, data] = await sAllSettled(p);
+
 			expect(err.length).toEqual(rejectCount);
-			expect(err[0].message).toEqual(REJECTSTR);
+			expect(err[0].reason).toEqual(REJECTSTR);
 			expect(Object.is(data, null)).toEqual(true);
 		});
 
@@ -434,10 +436,43 @@ describe('series', () => {
 			let rejectCount = 0;
 			let p = promiseFactory(resolveCount, rejectCount);
 			let [err, data] = await sAllSettled(p);
+
 			expect(data.length).toEqual(resolveCount);
 			expect(Object.is(err, null)).toEqual(true);
 			expect(data[0]).toEqual(RESOLVESTR);
+		});			
+
+		it('should return error and data in the same tuple, with error indexRefs correlated to the failure order from the passed in array', async () => {
+			let testors = [0, 1, 2, 3, 4, 5];
+
+			// [resolve, reject, resolve, reject, resolve, reject]
+			let promises = testors.map(t => {
+				if(t % 2 == 0) {
+					return Promise.resolve(t)
+				} else {
+					return Promise.reject(t);
+				}
+			});
+
+			let [err, data] = await sAllSettled(promises);
+
+			expect(err.length).toEqual(testors.length / 2);
+			expect(data.length).toEqual(testors.length / 2);
+			err.forEach(e => {
+				expect(testors[e.indexRef]).toEqual(e.reason)
+			});
 		});
+
+		it('should return a relevant error when not given an array', async () => {
+			let [errs, data] = await sAllSettled(2);
+			expect(errs[0].reason).toEqual('sAllSettled function requires an array of promises');
+		});
+
+		it('should return a relevant error when given an array with invalid promises', async () => {
+			let [errs, data] = await sAllSettled(['nopes']);
+			expect(errs[0].reason).toEqual('sAllSettled function requires an array of promises');
+		});
+
 	});
 });
 

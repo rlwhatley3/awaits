@@ -1,18 +1,19 @@
 type IhandleData = (data: any) => [null, any];
-type IhandleErr = (err: any) => [null | Error, any];
+type IhandleErr = (err: any) => [null | Error, null];
 type IhandleErrsAndData = (options: { errs: any, data: any }) => [null | Error, any];
 type IpromiseObj = { [key: string]: Promise<any> | Array<Promise<any>> }
 type IhandleObjPromises = (promiseObj: IpromiseObj) => Promise<[null | Error, any]>;
 type IhandleSinglePromise = (promise: Promise<any> | IpromiseObj) => Promise<[null | Error, any]>;
 type IhandleMultiplePromises = (promises: Array<Promise<any>>) => Promise<[null | Error, any]>;
 type IhandleMixedPromises = (promises: Array<any>) => Promise<[null | Error, any]>;
-type IhandleAllSettledPromises = (promises: Array<Promise<any>>) => Promise<[null | Array<Error>, null | Array<any>]>;
+type IhandleAllSettledPromises = (promises: Array<Promise<any>>) => Promise<[null | Array<IcorrelatedRejection>, null | Array<any>]>;
 type Iuntil = (promises: Array<Promise<any>> | Promise<any> | any, promisesOnly: boolean) => Promise<[null | Error, any]>;
 type IvalidRet = { [key: string]: any, _valid?: boolean };
 type Iiterator = (value: any, key: string | number, accumulator: any) => Promise<void | Iiterable>;
 type Iseries = (iterable: Array<any> | { [key: string]: any | Array<any> }, iterator:Iiterator, initializerValue: Promise<any> | any ) => Promise<[null | Error, any]>;
 type IiterableError = { [K in string | number]: Error | null }
 type Iiterable = { [K in string | number]: any }
+type IcorrelatedRejection = { indexRef: number, reason: string, status?: string }
 
 /**
  * Wraps a given error and outputs the correct tuple
@@ -108,20 +109,23 @@ const handleMultiplePromises: IhandleMultiplePromises = function handleMultipleP
  * @param an array of Promises
  * @return a Promise that resolves to a tuple of the rejected and resolved values
  */
-const handleAllSettledPromises: IhandleAllSettledPromises = async function handleAllSettledPromises(promises: Array<Promise<any>>): Promise<[null | Array<Error>, null | Array<any> ]> {
+const handleAllSettledPromises: IhandleAllSettledPromises = async function handleAllSettledPromises(promises: Array<Promise<any>>): Promise<[null | Array<IcorrelatedRejection>, null | Array<any> ]> {
 	const settled: Array<any> = await Promise.allSettled(promises);
 
-	const rejected: Array<Error> = settled.map(r => {
-		if (r.status == 'rejected') {
-			return formatErr(r.reason);
-		}
-	}).filter(Boolean);
+	let rejected: Array<IcorrelatedRejection> = [];
 
-	const resolved: Array<any> = settled.map(r => {
-		if(r.status == 'fulfilled') {
-			return r.value;
+	let resolved: Array<any> = [];
+
+	settled.forEach((v, indexRef) => {
+		switch (v.status) {
+			case 'rejected':
+				rejected.push({ ...v, indexRef });
+			break;
+			case 'fulfilled':
+				resolved.push(v.value);
+			break;
 		}
-	}).filter(Boolean);
+	});
 
 	return [rejected.length ? rejected : null, resolved.length ? resolved : null];
 }
@@ -288,9 +292,9 @@ export async function series(iterable: Iiterable, iterator:Iiterator = null, ini
 	return Promise.resolve(handleErrsAndData({ errs, data }));
 }
 
-export async function sAllSettled(promises: Array<Promise<any>>) {
+export async function sAllSettled(promises: Array<Promise<any>>  | any): Promise<[null | Array<IcorrelatedRejection>, null | Array<any>]> {
 	if(!Array.isArray(promises) || !promises.length || !promises.every(p => typeof p.then === 'function')) {
-		return Promise.resolve(handleErr('sAllSettled function requires an array of promises'));
+		return Promise.resolve([[{ reason: 'sAllSettled function requires an array of promises', indexRef: -1 }], null]);
 	}
 
 	return handleAllSettledPromises(promises);

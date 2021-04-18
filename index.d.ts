@@ -16,7 +16,7 @@
  * @param an array of promises to be resolved
  * @return a Promise which resolves to a tuple of type [null | Array<Error>, null | Array<any>]
  */
-// export declare function sAllSettled(promises: Array<Promise<any>>): Promise<[null | Array<Error>, null | Array<any>]>;
+// export declare function sAllSettled(promises: Array<Promise<any>>, correlateErrors: boolean = false): Promise<[null | Array<Error>, null | Array<any>]>;
 /**
  * Resolves a key value store of Promises
  * @param a promise or an array of promises to be resolved
