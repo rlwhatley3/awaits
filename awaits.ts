@@ -292,12 +292,78 @@ export async function series(iterable: Iiterable, iterator:Iiterator = null, ini
 	return Promise.resolve(handleErrsAndData({ errs, data }));
 }
 
+
+/**
+ * Resolves an array of promises and returns a tuple: [[null | Error], [any]]
+ * @param an array of promises to be resolved
+ * @return a Promise which resolves to a tuple of type [[null | Error], [any]]
+ */
 export async function sAllSettled(promises: Array<Promise<any>>  | any): Promise<[null | Array<IcorrelatedRejection>, null | Array<any>]> {
 	if(!Array.isArray(promises) || !promises.length || !promises.every(p => typeof p.then === 'function')) {
 		return Promise.resolve([[{ reason: 'sAllSettled function requires an array of promises', indexRef: -1 }], null]);
 	}
 
 	return handleAllSettledPromises(promises);
+}
+
+async function sPooler(iterable: any, concurrency: number = 10): Promise<any> {
+
+	const callKeys: Array<string> = Object.keys(iterable);
+
+	const pool: Array<any> = Array(concurrency).fill(1);
+
+	const data: any = callKeys.reduce((acc: any, k: any) => { 
+		acc[k] = null;
+		return acc;
+	} , {})
+
+	const poolShift = async (): Promise<any> => {
+		const key = callKeys.shift();
+
+		if(!key) return
+
+		const values = iterable[key];
+		const call = values[0];
+		const args = values[1];
+
+		data[key] = await s(call(...args));
+
+		if(callKeys.length) {
+			return await poolShift();
+		} else {
+			return data;
+		}
+	}
+
+	const poolData = pool.map(async () => await poolShift() );
+
+	const pooledData = await Promise.all(poolData);
+
+	return pooledData[0];
+}
+
+/**
+ * Resolves an array of promises and returns a tuple: [[null | Error], [any]]
+ * @param an object with values of a tuple of [promiseReturningFunctionRef, argsForFunctionCall]
+ * @param a object with configuration options
+ * @return a Promise which resolves to an object shaped as the one passed in
+ */
+export async function sPool(promises: any, config: any) {
+	if(!Object.keys(promises).length) {
+		return Promise.resolve({});
+	}
+	
+	let { concurrency } = config;
+
+	if(concurrency < 1) {
+		return Promise.reject(new Error('Concurrency must be greater than 0!!'));
+	}
+
+	if(!concurrency) {
+		concurrency = 10;
+	}
+
+	return await sPooler(promises, concurrency);
 }
 
 

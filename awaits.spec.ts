@@ -1,6 +1,6 @@
 
 // build checking
-import { until, s, zip, unzip, series, sAllSettled } from './dist/awaits.js'
+import { until, s, zip, unzip, series, sAllSettled, sPool } from './dist/awaits.js'
 
 // direct ts checking
 // import { until, s, zip, unzip, series, sAllSettled } from './awaits';
@@ -11,16 +11,16 @@ type eFactory = (nonErrors: number, trueErrors: number) => Array<Promise<string>
 const RESOLVESTR = 'da-bears';
 const REJECTSTR = 'rejected-da-bears';
 
-const promiseFactory:pFactory = (resolves: number = 0, rejects: number = 0): Array<Promise<any>> => {
+const promiseFactory:pFactory = (resolves: number = 0, rejects: number = 0, time = 800): Array<Promise<any>> => {
 	let ret = [];
 	for(let i = 0; i < resolves; i++) {
-		let p = new Promise((resolve, reject) => { setTimeout(() => { return resolve(RESOLVESTR) }, 800) });
+		let p = new Promise((resolve, reject) => { setTimeout(() => { return resolve(RESOLVESTR) }, time) });
 		p.catch(() => {});
 		ret.push(p);
 	}
 
 	for(let j = 0; j < rejects; j++) {
-		let p = new Promise((resolve, reject) => { setTimeout(() => { return reject(REJECTSTR) }, 800) });
+		let p = new Promise((resolve, reject) => { setTimeout(() => { return reject(REJECTSTR) }, time) });
 		p.catch(() => {})
 		ret.push(p)
 	}
@@ -471,6 +471,27 @@ describe('series', () => {
 		it('should return a relevant error when given an array with invalid promises', async () => {
 			let [errs, data] = await sAllSettled(['nopes']);
 			expect(errs[0].reason).toEqual('sAllSettled function requires an array of promises');
+		});
+
+	});
+
+	fdescribe('sPool', () => {
+
+		describe('something', () => {
+			const poolConfig = { concurrency: 5 };
+			it('should work', async () => {
+				const promises = {
+					'a': [promiseFactory, [1, 0, 100]],
+					'b': [promiseFactory, [1, 0, 2000]],
+					'c': [promiseFactory, [0, 1, 100]],
+					'd': [promiseFactory, [1, 0, 100]]
+				}
+
+				const pooledData = await sPool(promises, poolConfig);
+
+				console.log('pooledData::', pooledData);
+			});
+
 		});
 
 	});
