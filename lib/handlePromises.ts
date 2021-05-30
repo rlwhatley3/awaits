@@ -55,7 +55,7 @@ const handleMixedPromises: IhandleMixedPromises = async function(promises: Array
     if(resolvedMap[index]) data[index] = resolvedMap[index]; 
   });
 
-  return Promise.resolve(handleErrsAndData({ errs, data }));
+  return await Promise.resolve(handleErrsAndData({ errs, data }));
 }
 
 export {

@@ -29,7 +29,6 @@ type eFactory = (nonErrors: number, trueErrors: number) => Array<Promise<string>
 const RESOLVESTR = 'da-bears';
 const REJECTSTR = 'rejected-da-bears';
 
-
 const singlePromiseFactory: any = (resolution: boolean, ms: number): Promise<any> => {
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
@@ -117,6 +116,7 @@ describe('exported objects: ', () => {
 
 describe('handlers', () => {
 	describe('handleSinglePromise', () => {
+
 		describe('on a successful promise', () => {
 			const p = singlePromiseFactory(true, 100);
 			it('should resolve the value', async () => {
@@ -128,18 +128,19 @@ describe('handlers', () => {
 		});
 
 		describe('on a failing promise', () => {
-			const p = singlePromiseFactory(false, 100);
 			it('should resolve to the error value', async () => {
+				const p = singlePromiseFactory(false, 500);
 				const resolution = await handleSinglePromise(p);
 				expect(resolution.length).toEqual(2);
 				expect(resolution[0].message).toEqual(REJECTSTR);
 				expect(Object.is(null, resolution[1])).toEqual(true);
-
 			});
 		});
+
 	});
 
 	describe('handleMultiplePromises', () => {
+
 		describe('with all successful promises', () => {
 			const resolveCount = 3;
 			const rejectCount = 0;
@@ -163,6 +164,7 @@ describe('handlers', () => {
 				expect(resolution[0].message).toEqual(REJECTSTR);
 			});
 		});
+
 	});
 
 	describe('handleMixedPromises', () => {
@@ -181,8 +183,10 @@ describe('handlers', () => {
 				expect(data[1]).toEqual(promises[1]);
 				expect(data[2]).toEqual(promises[2]);
 			});
+
 		});
 	});
+
 });
 
 describe('until/s: when passed a single promise: ', () => {
@@ -259,6 +263,23 @@ describe('until/s: When passed an array of promises: ', () => {
 			let [err, data] = await until(promises);
 			expect(Object.is(data, null)).toEqual(true);
 			expect(err instanceof Error).toEqual(true);
+		});
+	});
+
+	describe('with allow non-promise values', () => {
+		it('should return all resolved and given values', async () => {
+			const resolveCount = 1;
+			const rejectCount = 0;
+
+			let promises: any = promiseFactory(resolveCount, rejectCount, 100);
+			promises = promises.concat(['a', 'b']);
+
+			const [err, data] = await until(promises, false);
+			expect(Object.is(null, err)).toEqual(true);
+			expect(data.length).toEqual(promises.length);
+			expect(data[0]).toEqual(RESOLVESTR);
+			expect(data[1]).toEqual(promises[1]);
+			expect(data[2]).toEqual(promises[2]);
 		});
 	});
 });
