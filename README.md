@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/awaits-until.svg?style=flat-square)](https://www.npmjs.org/package/awaits-until)
 [![install size](https://packagephobia.now.sh/badge?p=awaits-until)](https://packagephobia.now.sh/result?p=awaits-until)
 [![npm downloads](https://img.shields.io/npm/dm/awaits-until.svg?style=flat-square)](http://npm-stat.com/charts.html?package=awaits-until)
-[![Coverage Status](https://coveralls.io/repos/github/rlwhatley3/awaits/badge.svg?branch=promise-pooling)](https://coveralls.io/github/rlwhatley3/awaits?branch=promise-pooling)
+[![Coverage Status](https://coveralls.io/repos/github/rlwhatley3/awaits/badge.svg?branch=promise-pooling&service=github)](https://coveralls.io/github/rlwhatley3/awaits?branch=promise-pooling)
 
 
 ## Awaits
