@@ -25,5 +25,4 @@ jobs:
       uses: coverallsapp/github-action@master
       env:
         COVERALLS_REPO_TOKEN: "${{ secrets.COVERALLS_REPO_TOKEN }}"
-        COVERALLS_GIT_BRANCH: "${{ github.ref }}
-      
+        COVERALLS_GIT_BRANCH: "${{ github.ref }}   
