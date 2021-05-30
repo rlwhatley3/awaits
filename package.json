@@ -15,6 +15,24 @@
     "type": "git",
     "url": "git+https://github.com/rlwhatley3/awaits.git"
   },
+  "keywords": [
+    "await",
+    "awaits",
+    "async",
+    "pool",
+    "pooling",
+    "promise pooling",
+    "concurrency",
+    "promise concurrency",
+    "concurrent promises",
+    "promise",
+    "promises"
+    "utilities",
+    "node",
+    "microservices",
+    "tuple",
+    "promise tuple"
+  ],
   "author": "raymond whatley",
   "license": "ISC",
   "bugs": {
