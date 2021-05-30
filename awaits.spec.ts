@@ -127,7 +127,7 @@ describe('handlers', () => {
 			});
 		});
 
-		fdescribe('on a failing promise', () => {
+		describe('on a failing promise', () => {
 			const p = singlePromiseFactory(false, 100);
 			it('should resolve to the error value', async () => {
 				const resolution = await handleSinglePromise(p);
