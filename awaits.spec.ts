@@ -1,9 +1,19 @@
 
 // build checking
-import { until, s, zip, unzip, reduce, sAllSettled, sPool, pool } from './dist/awaits.js'
+import {
+	until,
+	s,
+	zip,
+	unzip,
+	reduce,
+	series,
+	sAllSettled,
+	sPool,
+	pool
+	} from './dist/awaits.js'
 
 // direct ts checking
-// import { until, s, zip, unzip, reduce, sAllSettled } from './awaits';
+// import { until, s, zip, unzip, reduce, series, sAllSettled } from './awaits';
 
 type pFactory = (resolves: number, rejects: number) => Array<Promise<string>>;
 type eFactory = (nonErrors: number, trueErrors: number) => Array<Promise<string>>;
@@ -78,6 +88,10 @@ describe('exported objects: ', () => {
 
 	test('reduce should be a function', () => {
 		expect(typeof reduce === 'function').toEqual(true);
+	});
+
+	test('series should be a function', () => {
+		expect(typeof series === 'function').toEqual(true);
 	});
 
 	test('sAllSettled should be a function', () => {

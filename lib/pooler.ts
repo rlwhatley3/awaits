@@ -16,8 +16,6 @@ class Pooler {
 
   generator: any;
 
-  gateResolutions: Array<any> = [];
-
   spool: any;
 
   spoolKeys: Array<string>;

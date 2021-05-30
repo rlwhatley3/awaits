@@ -57,3 +57,16 @@ export async function reduce(iterable: Iiterable, iterator:Iiterator = null, ini
 
   return Promise.resolve(handleErrsAndData({ errs, data }));
 }
+
+/**
+ * Iterates over a given object or array, calling the provided iterator function
+ * @param iterable - array or object that will be passed as the argument given in the iterator function
+ * @param iterator - a function that gets called in series: should return the target promises
+ * @param initilizerValue - a value of any type that will be passed into the given funtion as the the first 'lastResolvedValue', defaults to null
+ * @return a Promise which resolves to a tuple of type [ShapeofPassediterableAsErrors, ShapeofPassediterable]
+ */ 
+export async function series(iterable: Iiterable, iterator:Iiterator = null, initializerValue:any = null): Promise<[IiterableError, Iiterable]> {
+	return reduce(iterable, iterator, initializerValue);
+}
+
+
