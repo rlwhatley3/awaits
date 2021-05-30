@@ -1,6 +1,6 @@
 
 // build checking
-import { until, s, zip, unzip, series, sAllSettled, sPool } from './dist/awaits.js'
+import { until, s, zip, unzip, series, sAllSettled, sPool, pool } from './dist/awaits.js'
 
 // direct ts checking
 // import { until, s, zip, unzip, series, sAllSettled } from './awaits';
@@ -10,6 +10,19 @@ type eFactory = (nonErrors: number, trueErrors: number) => Array<Promise<string>
 
 const RESOLVESTR = 'da-bears';
 const REJECTSTR = 'rejected-da-bears';
+
+
+const singlePromiseFactory: any = (resolution: boolean, ms: number): Promise<any> => {
+	return new Promise((resolve, reject) => {
+		setTimeout(() => {
+			if(resolution) {
+				return resolve(RESOLVESTR);
+			} else {
+				return reject(REJECTSTR);
+			}
+		}, ms);
+	});
+}
 
 const promiseFactory:pFactory = (resolves: number = 0, rejects: number = 0, time = 800): Array<Promise<any>> => {
 	let ret = [];
@@ -475,23 +488,285 @@ describe('series', () => {
 
 	});
 
-	fdescribe('sPool', () => {
+	describe('sPool - ', () => {
 
-		describe('something', () => {
-			const poolConfig = { concurrency: 5 };
-			it('should work', async () => {
-				const promises = {
-					'a': [promiseFactory, [1, 0, 100]],
-					'b': [promiseFactory, [1, 0, 2000]],
-					'c': [promiseFactory, [0, 1, 100]],
-					'd': [promiseFactory, [1, 0, 100]]
-				}
+		const alphabet: any = [];
+		for( var i = 97; i <= 122; i++ ) {
+		    alphabet.push(String.fromCharCode(i));
+		}
 
-				const pooledData = await sPool(promises, poolConfig);
+		describe('as default: ', () => {
 
-				console.log('pooledData::', pooledData);
+			const basePromises = Array(26).fill(null).reduce((acc, _val, i) => {
+				acc[`${alphabet[i]}`] = [singlePromiseFactory, [true, 100]];
+				return acc;
+			}, {});
+
+			it('should successfully smoke test', async () => {
+
+				const promises = Object.assign({}, basePromises);
+
+				const [err, pooledData] = await sPool(promises, {});
+				
+				expect(Object.is(pooledData, null)).toEqual(false);
 			});
 
+			it('should not return an overall error, even on individual failure', async () => {
+				const promises = Object.assign({}, basePromises, { 
+					'b': [singlePromiseFactory, [true, 2000]],
+					'c': [singlePromiseFactory, [false, 100]]
+				});
+
+				const [err, pooledData] = await sPool(promises, {});
+				expect(Object.is(err, null)).toEqual(true);
+				expect(Object.is(pooledData['c'][0], null)).toEqual(false);
+			});
+
+			it('should return an object of the same shape, with the resolve "s" style values', async () => {
+				const promises = Object.assign({}, basePromises);
+
+				const [err, pooledData] = await sPool(promises, {});
+
+				expect(Object.is(err, null)).toEqual(true);
+
+				for(const key in promises) {
+					expect(Array.isArray(pooledData[key])).toEqual(true);
+					expect(pooledData[key].length).toEqual(2);
+					expect(Object.is(pooledData[key][0], null)).toEqual(true);
+					expect(pooledData[key][1]).toEqual(RESOLVESTR);
+				}
+
+			});
+
+		});
+
+		describe('with a given concurrency:', () => {
+
+			const options = { concurrency: 2 };
+
+			const basePromises = Array(5).fill(null).reduce((acc, _val, i) => {
+				acc[`${alphabet[i]}`] = [singlePromiseFactory, [true, 100]]
+				return acc;
+			}, {});
+
+			it('should resolve all promises', async () => {
+
+				const promises = Object.assign({}, basePromises);
+
+				const [err, pooledData] = await sPool(promises, {});
+
+				for(const key in promises) {
+					expect(Array.isArray(pooledData[key])).toEqual(true);
+					expect(pooledData[key].length).toEqual(2);
+					expect(Object.is(pooledData[key][0], null)).toEqual(true);
+					expect(pooledData[key][1]).toEqual(RESOLVESTR);
+				}
+			});
+		});
+
+		describe('using failFast:', () => {
+			const options = { concurrency: 2, failFast: true };
+
+			const basePromises = {
+				'a': [singlePromiseFactory, [true, 100]],
+				'b': [singlePromiseFactory, [true, 500]],
+				'c': [singlePromiseFactory, [false, 100]],
+				'd': [singlePromiseFactory, [true, 100]],
+				'e': [singlePromiseFactory, [true, 100]]
+			};
+
+
+			it('should have null values on anything that would get called after the failure', async () => {
+				const promises = Object.assign({}, basePromises);
+
+				const [err, pooledData] = await sPool(promises, options);
+
+				expect(Object.is(err, null)).toEqual(false);
+
+				expect(Object.is(null, pooledData['d'])).toEqual(true);
+				expect(Object.is(null, pooledData['e'])).toEqual(true);
+			});
+
+			it('should allow previously invoked promises to resolve', async () => {
+				const promises = Object.assign({}, basePromises);
+
+				const [err, pooledData] = await sPool(promises, options);
+
+				expect(Array.isArray(promises['b'])).toEqual(true);
+			});
+		});
+
+		describe('with less pools than concurrency: ', () => {
+			const options = { concurrency: 10 };
+
+			const basePromises = {
+				'a': [singlePromiseFactory, [true, 100]],
+				'b': [singlePromiseFactory, [true, 500]],
+				'c': [singlePromiseFactory, [false, 100]],
+				'd': [singlePromiseFactory, [true, 100]],
+				'e': [singlePromiseFactory, [true, 100]]
+			};
+
+			it('should resolve all pools', async () => {
+				const promises = Object.assign({}, basePromises);
+
+				const [err, pooledData] = await sPool(promises, options);
+
+				expect(Object.is(err, null)).toEqual(true);
+
+				for(const key in promises) {
+					expect(Array.isArray(pooledData[key])).toEqual(true);
+				}
+			});
+		});
+
+	});
+
+
+	describe('pool', () => {
+
+		let count = 0;
+
+		let resolutionCount = 0;
+
+		const generatorFunction = () => {
+			if(count < 5) {
+				const baseTime = 2000;
+
+				const timeout = count == 0 ? baseTime * 2 : baseTime / count;
+
+				count+=1;
+
+				return new Promise((resolve, reject) => {
+					return setTimeout(() => {
+						resolutionCount++;
+						return resolve({ timeout, resolutionCount });
+					}, timeout);
+				});
+			} else {
+				return null;
+			}
+		}
+
+		describe('with a non-function argument', () => {
+
+			it('should return an error', async () => {
+				const poolConfig = { concurrency: 2 };
+
+				const promiseGenerator = 'not a funtion';
+
+				const [err, pooledData] = await pool(promiseGenerator, poolConfig);
+
+				expect(Object.is(null, err)).toEqual(false);
+				expect(Object.is(null, pooledData)).toEqual(true);
+			});
+		});
+
+		describe('passing general functions with null enders', () => {
+			const poolConfig = { concurrency: 2 };
+			it('should resolve in the correct order', async () => {
+
+				const [err, pooledData] = await pool(generatorFunction, poolConfig);
+
+				const first = pooledData[0];
+				const[fErr, fData] = first;
+				expect(Object.is(null, fErr)).toEqual(true);
+				expect(fData.timeout).toEqual(2000);
+				expect(fData.resolutionCount).toEqual(1);
+
+				const second = pooledData[1];
+				const [sErr, sData] = second;
+				expect(Object.is(null, sErr)).toEqual(true);
+				expect(sData.timeout).toEqual(1000);
+				expect(sData.resolutionCount).toEqual(2);
+
+				const third = pooledData[2];
+				const [tErr, tData] = third;
+				expect(Object.is(null, tErr)).toEqual(true);
+				expect(Math.floor(tData.timeout)).toEqual(666);
+				expect(tData.resolutionCount).toEqual(3);
+
+				const fourth = pooledData[3];
+				const [foErr, foData] = fourth;
+				expect(Object.is(null, foErr)).toEqual(true);
+				expect(foData.timeout).toEqual(4000);
+				expect(foData.resolutionCount).toEqual(4);
+
+				const fifth = pooledData[4];
+				const [fiErr, fiData] = fifth;
+				expect(Object.is(null, fiErr)).toEqual(true);
+				expect(fiData.timeout).toEqual(500);
+				expect(fiData.resolutionCount).toEqual(5);
+
+			}, 15000);
+		});
+
+		describe('passing a true generator function', () => {
+			
+			const generatorFunction = function* gen() {
+				let count = 0;
+
+				let currentResolution = 1;
+
+				const baseTime = 2000;
+
+				while(count < 5) {
+					const timeout = count == 0 ? baseTime * 2 : baseTime / count;
+
+					count+=1;
+
+					const p = new Promise((resolve, reject) => {
+						return setTimeout(() => {
+							resolutionCount = currentResolution;
+							currentResolution++;
+							return resolve({ timeout, resolutionCount });
+						}, timeout);
+					});
+
+					yield p;
+				}
+			}
+
+			it('should resolve in the correct order and time', async () => {
+				const poolConfig = { concurrency: 2 };
+				
+				const promiseGenerator = generatorFunction();
+
+				const [err, pooledData] = await pool(promiseGenerator, poolConfig);
+
+				expect(Object.is(null, err)).toEqual(true);
+
+				const first = pooledData[0];
+				const[fErr, fData] = first;
+				expect(Object.is(null, fErr)).toEqual(true);
+				expect(fData.timeout).toEqual(2000);
+				expect(fData.resolutionCount).toEqual(1);
+
+				const second = pooledData[1];
+				const [sErr, sData] = second;
+				expect(Object.is(null, sErr)).toEqual(true);
+				expect(sData.timeout).toEqual(1000);
+				expect(sData.resolutionCount).toEqual(2);
+
+				const third = pooledData[2];
+				const [tErr, tData] = third;
+				expect(Object.is(null, tErr)).toEqual(true);
+				expect(Math.floor(tData.timeout)).toEqual(666);
+				expect(tData.resolutionCount).toEqual(3);
+
+				const fourth = pooledData[3];
+				const [foErr, foData] = fourth;
+				expect(Object.is(null, foErr)).toEqual(true);
+				expect(foData.timeout).toEqual(4000);
+				expect(foData.resolutionCount).toEqual(4);
+
+				const fifth = pooledData[4];
+				const [fiErr, fiData] = fifth;
+				expect(Object.is(null, fiErr)).toEqual(true);
+				expect(fiData.timeout).toEqual(500);
+				expect(fiData.resolutionCount).toEqual(5);
+
+			}, 15000);
 		});
 
 	});
