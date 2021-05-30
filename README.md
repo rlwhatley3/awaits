@@ -390,7 +390,10 @@ Params(2):
    - each tuple should have a shape of
       - tuple[0] -> a promise returning function definition (not an invocation)
       - tuple[1] -> an array of arguments that will be passed into the invocked function
-      ie: ``` const data = await tuple[0](...tuple[1])```
+      ie: 
+      ```
+        const data = await tuple[0](...tuple[1])
+      ```
 
  2. A configuration object in the shape of 
     ```
