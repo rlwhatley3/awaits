@@ -1,26 +1,56 @@
 
 // build checking
-import { until, s, zip, unzip, series, sAllSettled } from './dist/awaits.js'
+import {
+	until,
+	s,
+	zip,
+	unzip,
+	reduce,
+	series,
+	sAllSettled,
+	sPool,
+	pool
+	} from './dist/awaits.js'
+
+	import {
+		handleSinglePromise,
+		handleMixedPromises,
+		handleMultiplePromises
+	} from './dist/lib/handlePromises.js';
 
 // direct ts checking
-// import { until, s, zip, unzip, series, sAllSettled } from './awaits';
+// import { until, s, zip, unzip, reduce, series, sAllSettled, pool, sPool } from './awaits';
 
-type pFactory = (resolves: number, rejects: number) => Array<Promise<string>>;
+import type { Igenerator } from './lib/pooler';
+
+type pFactory = (resolves: number, rejects: number, time?: number) => Array<Promise<string>>;
 type eFactory = (nonErrors: number, trueErrors: number) => Array<Promise<string>>;
 
 const RESOLVESTR = 'da-bears';
 const REJECTSTR = 'rejected-da-bears';
 
-const promiseFactory:pFactory = (resolves: number = 0, rejects: number = 0): Array<Promise<any>> => {
+const singlePromiseFactory: any = (resolution: boolean, ms: number): Promise<any> => {
+	return new Promise((resolve, reject) => {
+		setTimeout(() => {
+			if(resolution) {
+				return resolve(RESOLVESTR);
+			} else {
+				return reject(REJECTSTR);
+			}
+		}, ms);
+	});
+}
+
+const promiseFactory:pFactory = (resolves: number = 0, rejects: number = 0, time = 800): Array<Promise<any>> => {
 	let ret = [];
 	for(let i = 0; i < resolves; i++) {
-		let p = new Promise((resolve, reject) => { setTimeout(() => { return resolve(RESOLVESTR) }, 800) });
+		let p = new Promise((resolve, reject) => { setTimeout(() => { return resolve(RESOLVESTR) }, time) });
 		p.catch(() => {});
 		ret.push(p);
 	}
 
 	for(let j = 0; j < rejects; j++) {
-		let p = new Promise((resolve, reject) => { setTimeout(() => { return reject(REJECTSTR) }, 800) });
+		let p = new Promise((resolve, reject) => { setTimeout(() => { return reject(REJECTSTR) }, time) });
 		p.catch(() => {})
 		ret.push(p)
 	}
@@ -63,9 +93,100 @@ describe('exported objects: ', () => {
 		expect(typeof unzip === 'function').toEqual(true);;
 	});
 
+	test('reduce should be a function', () => {
+		expect(typeof reduce === 'function').toEqual(true);
+	});
+
 	test('series should be a function', () => {
 		expect(typeof series === 'function').toEqual(true);
 	});
+
+	test('sAllSettled should be a function', () => {
+		expect(typeof sAllSettled === 'function').toEqual(true);
+	});
+
+	test('pool should be a function', () => {
+		expect(typeof pool === 'function').toEqual(true);
+	});
+
+	test('sPool should be a function', () => {
+		expect(typeof sPool === 'function').toEqual(true);
+	});
+});
+
+describe('handlers', () => {
+	describe('handleSinglePromise', () => {
+
+		describe('on a successful promise', () => {
+			const p = singlePromiseFactory(true, 100);
+			it('should resolve the value', async () => {
+				const resolution = await handleSinglePromise(p);
+				expect(resolution.length).toEqual(2);
+				expect(Object.is(null, resolution[0])).toEqual(true);
+				expect(resolution[1]).toEqual(RESOLVESTR);
+			});
+		});
+
+		describe('on a failing promise', () => {
+			it('should resolve to the error value', async () => {
+				const p = singlePromiseFactory(false, 500);
+				const resolution = await handleSinglePromise(p);
+				expect(resolution.length).toEqual(2);
+				expect(resolution[0].message).toEqual(REJECTSTR);
+				expect(Object.is(null, resolution[1])).toEqual(true);
+			});
+		});
+
+	});
+
+	describe('handleMultiplePromises', () => {
+
+		describe('with all successful promises', () => {
+			const resolveCount = 3;
+			const rejectCount = 0;
+			const promises = promiseFactory(resolveCount, rejectCount, 100);
+			it('should resolve the values', async () => {
+				const resolution = await handleMultiplePromises(promises);
+				expect(resolution.length).toEqual(2);
+				expect(Object.is(null,resolution[0])).toEqual(true);
+				expect(resolution[1].length).toEqual(resolveCount);
+			});
+		});
+
+		describe('with a failing promise', () => {
+			const resolveCount = 1;
+			const rejectCount = 2;
+			const promises = promiseFactory(resolveCount, rejectCount, 100);
+			it('should resolve to [error, null]', async() => {
+				const resolution = await handleMultiplePromises(promises);
+				expect(resolution.length).toEqual(2);
+				expect(Object.is(null, resolution[1])).toEqual(true);
+				expect(resolution[0].message).toEqual(REJECTSTR);
+			});
+		});
+
+	});
+
+	describe('handleMixedPromises', () => {
+		describe('with mixed promises and values', () => {
+			const resolveCount = 1;
+			const rejectCount = 0;
+			let promises:any = promiseFactory(resolveCount, rejectCount, 100);
+			promises = promises.concat(['a', 'b']);
+			it('should resolve the promises, and return the values', async () => {
+				const resolution = await handleMixedPromises(promises);
+				expect(resolution.length).toEqual(2);
+				const [err, data] = resolution;
+				expect(Object.is(null, err)).toEqual(true);
+				expect(data.length).toEqual(promises.length);
+				expect(data[0]).toEqual(RESOLVESTR);
+				expect(data[1]).toEqual(promises[1]);
+				expect(data[2]).toEqual(promises[2]);
+			});
+
+		});
+	});
+
 });
 
 describe('until/s: when passed a single promise: ', () => {
@@ -142,6 +263,23 @@ describe('until/s: When passed an array of promises: ', () => {
 			let [err, data] = await until(promises);
 			expect(Object.is(data, null)).toEqual(true);
 			expect(err instanceof Error).toEqual(true);
+		});
+	});
+
+	describe('with allow non-promise values', () => {
+		it('should return all resolved and given values', async () => {
+			const resolveCount = 1;
+			const rejectCount = 0;
+
+			let promises: any = promiseFactory(resolveCount, rejectCount, 100);
+			promises = promises.concat(['a', 'b']);
+
+			const [err, data] = await until(promises, false);
+			expect(Object.is(null, err)).toEqual(true);
+			expect(data.length).toEqual(promises.length);
+			expect(data[0]).toEqual(RESOLVESTR);
+			expect(data[1]).toEqual(promises[1]);
+			expect(data[2]).toEqual(promises[2]);
 		});
 	});
 });
@@ -292,17 +430,17 @@ describe('unzip: when passed an object with promises for values', () => {
 	});
 });
 
-describe('series', () => {
+describe('reduce', () => {
 	describe('with an object', () => {
-		it('should execute the given iterator in series', async () => {
+		it('should execute the given iterator in reduced series', async () => {
 			let initializerValue = Promise.resolve({ 'pre-a': 0 });
 			let seriesData: any = {
 				'a': 1,
 				'b': 2,
 				'c': 3
 			}
-			let [err, data] = await series(seriesData, (value:any, key:any, lastReturnedValue:any) => {
-				return Promise.resolve(value + 1);
+			let [err, data] = await reduce(seriesData, (value:any, key:any, lastReturnedValue:any) => {
+				return new Promise((resolve, reject) => { return resolve(value + 1) });
 			}, initializerValue);
 
 			for(let key in data) {
@@ -329,7 +467,7 @@ describe('series', () => {
 					'd': 4
 				}
 
-				let [err, data] = await series(seriesData, null);
+				let [err, data] = await reduce(seriesData, null);
 				for (let key in data) {
 					expect(data[key]).toEqual(seriesDataTest[key]);
 				}
@@ -346,7 +484,7 @@ describe('series', () => {
 					'b': 2,
 					'c': 3
 				}
-				let [errs, data] = await series(seriesData, (value:any, key:any, lastReturnedValue:any) => {
+				let [errs, data] = await reduce(seriesData, (value:any, key:any, lastReturnedValue:any) => {
 					return Promise.reject(value + 1);
 				}, initializerValue);
 
@@ -360,11 +498,11 @@ describe('series', () => {
 	});
 
 	describe('with an array', () => {
-		it('should execute the given array in series', async () => {
+		it('should execute the given array in reduced series', async () => {
 			let initializerValue = 'pre-a';
 			let initializerValuePromise = Promise.resolve(initializerValue);
 			let seriesData: any = ['a', 'b', 'c'];
-			let [err, data] = await series(seriesData, (value:any, index:any, accumulater:any) => {
+			let [err, data] = await reduce(seriesData, (value:any, index:any, accumulater:any) => {
 				if(index == 0) {
 					expect(accumulater).toEqual(initializerValue);
 				} else {
@@ -381,7 +519,7 @@ describe('series', () => {
 		describe('using the default function', () => {
 			it('should return the resolved values in order', async () => {
 				let seriesData: any = ['a', 'b', 'c', Promise.resolve('d')];
-				let [err, data] = await series(seriesData);
+				let [err, data] = await reduce(seriesData);
 
 				expect(Object.is(err, null)).toEqual(true);
 			});
@@ -392,7 +530,7 @@ describe('series', () => {
 				let initializerValue = 'pre-a';
 				let initializerValuePromise = Promise.resolve(initializerValue);
 				let seriesData: any = ['a', 'b', 'c'];
-				let [errs, data] = await series(seriesData, (value:any, index:any, accumulater:any) => {
+				let [errs, data] = await reduce(seriesData, (value:any, index:any, accumulater:any) => {
 					return Promise.reject(value + 1);
 				}, initializerValue);
 
@@ -471,6 +609,289 @@ describe('series', () => {
 		it('should return a relevant error when given an array with invalid promises', async () => {
 			let [errs, data] = await sAllSettled(['nopes']);
 			expect(errs[0].reason).toEqual('sAllSettled function requires an array of promises');
+		});
+
+	});
+
+	describe('sPool - ', () => {
+
+		const alphabet: any = [];
+		for( var i = 97; i <= 122; i++ ) {
+		    alphabet.push(String.fromCharCode(i));
+		}
+
+		describe('as default: ', () => {
+
+			const basePromises = Array(26).fill(null).reduce((acc, _val, i) => {
+				acc[`${alphabet[i]}`] = [singlePromiseFactory, [true, 100]];
+				return acc;
+			}, {});
+
+			it('should successfully smoke test', async () => {
+
+				const promises = Object.assign({}, basePromises);
+
+				const [err, pooledData] = await sPool(promises, {});
+				
+				expect(Object.is(pooledData, null)).toEqual(false);
+			});
+
+			it('should not return an overall error, even on individual failure', async () => {
+				const promises = Object.assign({}, basePromises, { 
+					'b': [singlePromiseFactory, [true, 2000]],
+					'c': [singlePromiseFactory, [false, 100]]
+				});
+
+				const [err, pooledData] = await sPool(promises, {});
+				expect(Object.is(err, null)).toEqual(true);
+				expect(Object.is(pooledData['c'][0], null)).toEqual(false);
+			});
+
+			it('should return an object of the same shape, with the resolve "s" style values', async () => {
+				const promises = Object.assign({}, basePromises);
+
+				const [err, pooledData] = await sPool(promises, {});
+
+				expect(Object.is(err, null)).toEqual(true);
+
+				for(const key in promises) {
+					expect(Array.isArray(pooledData[key])).toEqual(true);
+					expect(pooledData[key].length).toEqual(2);
+					expect(Object.is(pooledData[key][0], null)).toEqual(true);
+					expect(pooledData[key][1]).toEqual(RESOLVESTR);
+				}
+
+			});
+
+		});
+
+		describe('with a given concurrency:', () => {
+
+			const options = { concurrency: 2 };
+
+			const basePromises = Array(5).fill(null).reduce((acc, _val, i) => {
+				acc[`${alphabet[i]}`] = [singlePromiseFactory, [true, 100]]
+				return acc;
+			}, {});
+
+			it('should resolve all promises', async () => {
+
+				const promises = Object.assign({}, basePromises);
+
+				const [err, pooledData] = await sPool(promises, {});
+
+				for(const key in promises) {
+					expect(Array.isArray(pooledData[key])).toEqual(true);
+					expect(pooledData[key].length).toEqual(2);
+					expect(Object.is(pooledData[key][0], null)).toEqual(true);
+					expect(pooledData[key][1]).toEqual(RESOLVESTR);
+				}
+			});
+		});
+
+		describe('using failFast:', () => {
+			const options = { concurrency: 2, failFast: true };
+
+			const basePromises = {
+				'a': [singlePromiseFactory, [true, 100]],
+				'b': [singlePromiseFactory, [true, 500]],
+				'c': [singlePromiseFactory, [false, 100]],
+				'd': [singlePromiseFactory, [true, 100]],
+				'e': [singlePromiseFactory, [true, 100]]
+			};
+
+
+			it('should have null values on anything that would get called after the failure', async () => {
+				const promises = Object.assign({}, basePromises);
+
+				const [err, pooledData] = await sPool(promises, options);
+
+				expect(Object.is(err, null)).toEqual(false);
+
+				expect(Object.is(null, pooledData['d'])).toEqual(true);
+				expect(Object.is(null, pooledData['e'])).toEqual(true);
+			});
+
+			it('should allow previously invoked promises to resolve', async () => {
+				const promises = Object.assign({}, basePromises);
+
+				const [err, pooledData] = await sPool(promises, options);
+
+				expect(Array.isArray(promises['b'])).toEqual(true);
+			});
+		});
+
+		describe('with less pools than concurrency: ', () => {
+			const options = { concurrency: 10 };
+
+			const basePromises = {
+				'a': [singlePromiseFactory, [true, 100]],
+				'b': [singlePromiseFactory, [true, 500]],
+				'c': [singlePromiseFactory, [false, 100]],
+				'd': [singlePromiseFactory, [true, 100]],
+				'e': [singlePromiseFactory, [true, 100]]
+			};
+
+			it('should resolve all pools', async () => {
+				const promises = Object.assign({}, basePromises);
+
+				const [err, pooledData] = await sPool(promises, options);
+
+				expect(Object.is(err, null)).toEqual(true);
+
+				for(const key in promises) {
+					expect(Array.isArray(pooledData[key])).toEqual(true);
+				}
+			});
+		});
+
+	});
+
+
+	describe('pool', () => {
+
+		let count = 0;
+
+		let resolutionCount = 0;
+
+		const generatorFunction = () => {
+			if(count < 5) {
+				const baseTime = 2000;
+
+				const timeout = count == 0 ? baseTime * 2 : baseTime / count;
+
+				count+=1;
+
+				return new Promise((resolve, reject) => {
+					return setTimeout(() => {
+						resolutionCount++;
+						return resolve({ timeout, resolutionCount });
+					}, timeout);
+				});
+			} else {
+				return null;
+			}
+		}
+
+		describe('with a non-function argument', () => {
+
+			it('should return an error', async () => {
+				const poolConfig = { concurrency: 2 };
+
+				const promiseGenerator = 'not a funtion';
+
+				const [err, pooledData] = await pool(promiseGenerator as unknown as Igenerator, poolConfig);
+
+				expect(Object.is(null, err)).toEqual(false);
+				expect(Object.is(null, pooledData)).toEqual(true);
+			});
+		});
+
+		describe('passing general functions with null enders', () => {
+			const poolConfig = { concurrency: 2 };
+			it('should resolve in the correct order', async () => {
+
+				const [err, pooledData] = await pool(generatorFunction, poolConfig);
+
+				const first = pooledData[0];
+				const[fErr, fData] = first;
+				expect(Object.is(null, fErr)).toEqual(true);
+				expect(fData.timeout).toEqual(2000);
+				expect(fData.resolutionCount).toEqual(1);
+
+				const second = pooledData[1];
+				const [sErr, sData] = second;
+				expect(Object.is(null, sErr)).toEqual(true);
+				expect(sData.timeout).toEqual(1000);
+				expect(sData.resolutionCount).toEqual(2);
+
+				const third = pooledData[2];
+				const [tErr, tData] = third;
+				expect(Object.is(null, tErr)).toEqual(true);
+				expect(Math.floor(tData.timeout)).toEqual(666);
+				expect(tData.resolutionCount).toEqual(3);
+
+				const fourth = pooledData[3];
+				const [foErr, foData] = fourth;
+				expect(Object.is(null, foErr)).toEqual(true);
+				expect(foData.timeout).toEqual(4000);
+				expect(foData.resolutionCount).toEqual(4);
+
+				const fifth = pooledData[4];
+				const [fiErr, fiData] = fifth;
+				expect(Object.is(null, fiErr)).toEqual(true);
+				expect(fiData.timeout).toEqual(500);
+				expect(fiData.resolutionCount).toEqual(5);
+
+			}, 15000);
+		});
+
+		describe('passing a true generator function', () => {
+			
+			const generatorFunction = function* gen() {
+				let count = 0;
+
+				let currentResolution = 1;
+
+				const baseTime = 2000;
+
+				while(count < 5) {
+					const timeout = count == 0 ? baseTime * 2 : baseTime / count;
+
+					count+=1;
+
+					const p = new Promise((resolve, reject) => {
+						return setTimeout(() => {
+							resolutionCount = currentResolution;
+							currentResolution++;
+							return resolve({ timeout, resolutionCount });
+						}, timeout);
+					});
+
+					yield p;
+				}
+			}
+
+			it('should resolve in the correct order and time', async () => {
+				const poolConfig = { concurrency: 2 };
+				
+				const promiseGenerator = generatorFunction();
+
+				const [err, pooledData] = await pool(promiseGenerator, poolConfig);
+
+				expect(Object.is(null, err)).toEqual(true);
+
+				const first = pooledData[0];
+				const[fErr, fData] = first;
+				expect(Object.is(null, fErr)).toEqual(true);
+				expect(fData.timeout).toEqual(2000);
+				expect(fData.resolutionCount).toEqual(1);
+
+				const second = pooledData[1];
+				const [sErr, sData] = second;
+				expect(Object.is(null, sErr)).toEqual(true);
+				expect(sData.timeout).toEqual(1000);
+				expect(sData.resolutionCount).toEqual(2);
+
+				const third = pooledData[2];
+				const [tErr, tData] = third;
+				expect(Object.is(null, tErr)).toEqual(true);
+				expect(Math.floor(tData.timeout)).toEqual(666);
+				expect(tData.resolutionCount).toEqual(3);
+
+				const fourth = pooledData[3];
+				const [foErr, foData] = fourth;
+				expect(Object.is(null, foErr)).toEqual(true);
+				expect(foData.timeout).toEqual(4000);
+				expect(foData.resolutionCount).toEqual(4);
+
+				const fifth = pooledData[4];
+				const [fiErr, fiData] = fifth;
+				expect(Object.is(null, fiErr)).toEqual(true);
+				expect(fiData.timeout).toEqual(500);
+				expect(fiData.resolutionCount).toEqual(5);
+
+			}, 15000);
 		});
 
 	});
