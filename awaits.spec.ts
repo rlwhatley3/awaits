@@ -12,12 +12,18 @@ import {
 	pool
 	} from './dist/awaits.js'
 
+	import {
+		handleSinglePromise,
+		handleMixedPromises,
+		handleMultiplePromises
+	} from './lib/handlePromises';
+
 // direct ts checking
 // import { until, s, zip, unzip, reduce, series, sAllSettled, pool, sPool } from './awaits';
 
 import type { Igenerator } from './lib/pooler';
 
-type pFactory = (resolves: number, rejects: number) => Array<Promise<string>>;
+type pFactory = (resolves: number, rejects: number, time?: number) => Array<Promise<string>>;
 type eFactory = (nonErrors: number, trueErrors: number) => Array<Promise<string>>;
 
 const RESOLVESTR = 'da-bears';
@@ -106,6 +112,77 @@ describe('exported objects: ', () => {
 
 	test('sPool should be a function', () => {
 		expect(typeof sPool === 'function').toEqual(true);
+	});
+});
+
+describe('handlers', () => {
+	describe('handleSinglePromise', () => {
+		describe('on a successful promise', () => {
+			const p = singlePromiseFactory(true, 100);
+			it('should resolve the value', async () => {
+				const resolution = await handleSinglePromise(p);
+				expect(resolution.length).toEqual(2);
+				expect(Object.is(null, resolution[0])).toEqual(true);
+				expect(resolution[1]).toEqual(RESOLVESTR);
+			});
+		});
+
+		fdescribe('on a failing promise', () => {
+			const p = singlePromiseFactory(false, 100);
+			it('should resolve to the error value', async () => {
+				const resolution = await handleSinglePromise(p);
+				expect(resolution.length).toEqual(2);
+				expect(resolution[0].message).toEqual(REJECTSTR);
+				expect(Object.is(null, resolution[1])).toEqual(true);
+
+			});
+		});
+	});
+
+	describe('handleMultiplePromises', () => {
+		describe('with all successful promises', () => {
+			const resolveCount = 3;
+			const rejectCount = 0;
+			const promises = promiseFactory(resolveCount, rejectCount, 100);
+			it('should resolve the values', async () => {
+				const resolution = await handleMultiplePromises(promises);
+				expect(resolution.length).toEqual(2);
+				expect(Object.is(null,resolution[0])).toEqual(true);
+				expect(resolution[1].length).toEqual(resolveCount);
+			});
+		});
+
+		describe('with a failing promise', () => {
+			const resolveCount = 1;
+			const rejectCount = 2;
+			const promises = promiseFactory(resolveCount, rejectCount, 100);
+			it('should resolve to [error, null]', async() => {
+				const resolution = await handleMultiplePromises(promises);
+				expect(resolution.length).toEqual(2);
+				expect(Object.is(null, resolution[1])).toEqual(true);
+				expect(resolution[0].message).toEqual(REJECTSTR);
+			});
+		});
+	});
+
+	describe('handleMixedPromises', () => {
+		describe('with mixed promises and values', () => {
+			const resolveCount = 1;
+			const rejectCount = 0;
+			let promises:any = promiseFactory(resolveCount, rejectCount, 100);
+			promises = promises.concat(['a', 'b']);
+			it('should resolve the promises, and return the values', async () => {
+				const resolution = await handleMixedPromises(promises);
+				console.log('reso', resolution)
+				expect(resolution.length).toEqual(2);
+				const [err, data] = resolution;
+				expect(Object.is(null, err)).toEqual(true);
+				expect(data.length).toEqual(promises.length);
+				expect(data[0]).toEqual(RESOLVESTR);
+				expect(data[1]).toEqual(promises[1]);
+				expect(data[2]).toEqual(promises[2]);
+			});
+		});
 	});
 });
 
