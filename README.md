@@ -1,6 +1,15 @@
 
+<!-- version -->
+[![npm version](https://img.shields.io/npm/v/awaits-until.svg?style=flat-square)](https://www.npmjs.org/package/awaits-until)
 
+<!-- install size -->
+[![install size](https://packagephobia.now.sh/badge?p=awaits-until)](https://packagephobia.now.sh/result?p=awaits-until)
+
+<!-- downloads -->
+[![npm downloads](https://img.shields.io/npm/dm/awaits-until.svg?style=flat-square)](http://npm-stat.com/charts.html?package=awaits-until)
 ## Awaits
+
+
 
 A small set of helper functions for resolving promises, arrays of promises, and key value stores of promises into tuples or key value stores of tuples.
 
