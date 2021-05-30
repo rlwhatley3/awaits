@@ -3,7 +3,7 @@
 import { until, s, zip, unzip, reduce, sAllSettled, sPool, pool } from './dist/awaits.js'
 
 // direct ts checking
-// import { until, s, zip, unzip, series, sAllSettled } from './awaits';
+// import { until, s, zip, unzip, reduce, sAllSettled } from './awaits';
 
 type pFactory = (resolves: number, rejects: number) => Array<Promise<string>>;
 type eFactory = (nonErrors: number, trueErrors: number) => Array<Promise<string>>;
@@ -78,6 +78,18 @@ describe('exported objects: ', () => {
 
 	test('reduce should be a function', () => {
 		expect(typeof reduce === 'function').toEqual(true);
+	});
+
+	test('sAllSettled should be a function', () => {
+		expect(typeof sAllSettled === 'function').toEqual(true);
+	});
+
+	test('pool should be a function', () => {
+		expect(typeof pool === 'function').toEqual(true);
+	});
+
+	test('sPool should be a function', () => {
+		expect(typeof sPool === 'function').toEqual(true);
 	});
 });
 
