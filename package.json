@@ -8,7 +8,7 @@
     "prepublishOnly": "npm run build",
     "prepare": "npm run build",
     "test": "npm run build && jest",
-    "test-cli": "jest --coverage && coveralls < coverage/lcov.info",
+    "test-cli": "jest --coverage --collectCoverageFrom=dist/**/*.js && coveralls < coverage/lcov.info",
     "build": "npm run clean && tsc",
     "clean": "rm -rf dist"
   },
