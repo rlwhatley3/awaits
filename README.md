@@ -170,6 +170,7 @@ note: on a promise getting rejected, the object will still get returned. The err
 
 This function resolves each returned promise or value from the given iterator function in series.
 Valid iterables are Arrays and Objects. Returned values will mirror the given iterable.
+
 params(3): 
  1. An iterable Array or Object
  2. An iterator function that either returns a value, or a promise to be resolved. This function takes 3 arguments.
@@ -265,11 +266,10 @@ Note: if no errors are present, err will be null.
 
 ### Promise pooling
 
-Promise pooling (aka concurrency controll) is available in two methods. sPool and pool, depending on the preferred use case.
+Promise pooling (aka concurrency control) is available in two methods. sPool and pool, depending on the preferred use case.
 
 #### pool
 
-The Pool function takes in two arguments:
 params(2):
  1. 
    - A function that takes 0 arguments and returns a Promise, AND returns null as a 'stop' signal
@@ -292,7 +292,6 @@ return: A tuple of [err, data]. Err will represent a 'stopping' error. Individua
 Using a false generator function:
 
 ```
-
 
   let count = 0;
 
@@ -335,6 +334,7 @@ Using a false generator function:
 
 
 ```
+
 
 Using a true generator
 ```
@@ -382,6 +382,7 @@ Using a true generator
 #### sPool
 
 The sPool function takes in two arguments:
+
 Params(2):
  1. a shaped object
    - the shaped object is an object of type key-value
