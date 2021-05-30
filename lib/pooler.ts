@@ -1,6 +1,10 @@
 import { s } from './until';
 
 export type IpoolConfiguration = { concurrency?: number, failFast?: boolean }
+export type IsPoolObject = { [K in string | number]: any };
+export type IsPool = (spool: IsPoolObject, config: IpoolConfiguration) => Promise<[null | Error, any]>;
+export type Igenerator = (() => Promise<any>) | (Generator<Promise<any>>);
+export type Ipool = (generator: Igenerator, config: IpoolConfiguration) => Promise<[null | Error, any]>;
 
 class Pooler {
 
@@ -182,7 +186,7 @@ async function sPoolHandler(spool: any, config: IpoolConfiguration = { concurren
  * @param a configuration object accepting a fields of concurrency:number and failFast:boolean
  * @return a Promise which resolves to an object shaped as the one passed in
  */
-const sPool = async function sPool(spool: any, config: IpoolConfiguration = { concurrency: 20, failFast: false }): Promise<[null | Error, any]> {
+const sPool:IsPool = async function sPool(spool: IsPoolObject, config: IpoolConfiguration = { concurrency: 20, failFast: false }): Promise<[null | Error, any]> {
   if(!Object.keys(spool).length) {
     return Promise.resolve([null, {}]);
   }
@@ -201,13 +205,14 @@ async function poolHandler(generator: any, config: IpoolConfiguration): Promise<
   return data;
 }
 
+
 /**
  * Resolves a generated pool of promises and returns a tuple: [null | Error, [any]]
  * @param a function that returns a promise or null OR a generator function
  * @param a configuration object accepting a fields of concurrency:number and failFast:boolean
  * @return a Promise, which resolves to a tuble of [null | Error, [any]]
  */
-const pool = async function pool(generatorFunction: any, config: IpoolConfiguration = { concurrency: 20, failFast: false }): Promise<[null | Error, any]> {
+const pool:Ipool = async function pool(generatorFunction: Igenerator, config: IpoolConfiguration = { concurrency: 20, failFast: false }): Promise<[null | Error, any]> {
   return await poolHandler(generatorFunction, config);
 }
 

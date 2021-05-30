@@ -13,7 +13,9 @@ import {
 	} from './dist/awaits.js'
 
 // direct ts checking
-// import { until, s, zip, unzip, reduce, series, sAllSettled } from './awaits';
+// import { until, s, zip, unzip, reduce, series, sAllSettled, pool, sPool } from './awaits';
+
+import type { Igenerator } from './lib/pooler';
 
 type pFactory = (resolves: number, rejects: number) => Array<Promise<string>>;
 type eFactory = (nonErrors: number, trueErrors: number) => Array<Promise<string>>;
@@ -681,7 +683,7 @@ describe('reduce', () => {
 
 				const promiseGenerator = 'not a funtion';
 
-				const [err, pooledData] = await pool(promiseGenerator, poolConfig);
+				const [err, pooledData] = await pool(promiseGenerator as unknown as Igenerator, poolConfig);
 
 				expect(Object.is(null, err)).toEqual(false);
 				expect(Object.is(null, pooledData)).toEqual(true);

@@ -7,7 +7,6 @@ export type Ireduce = (iterable: Array<any> | { [key: string]: any | Array<any> 
 export type IiterableError = { [K in string | number]: Error | null }
 export type Iiterable = { [K in string | number]: any }
 
-
 /**
  * a default iterator that returns the resolved value, or just the value if its not a promise.
  * @param options - an object with 'err' and 'data' fields
@@ -24,7 +23,7 @@ const defaultReduceIterator:Iiterator = async function defaultReduceIterator(val
  * @param iterator - a function that gets called in series: should return the target promises
  * @param initilizerValue - a value of any type that will be passed into the given funtion as the the first 'lastResolvedValue', defaults to null
  * @return a Promise which resolves to a tuple of type [ShapeofPassediterableAsErrors, ShapeofPassediterable]
- */                                                                                                 
+ */      
 export async function reduce(iterable: Iiterable, iterator:Iiterator = null, initializerValue:any = null): Promise<[IiterableError, Iiterable]> {
   
   if(!iterator) iterator = defaultReduceIterator;

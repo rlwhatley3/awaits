@@ -8,12 +8,13 @@ These methods allow access of async function/promise rejections and resolutions 
 
 I strongly feel that this _should_ be the default behavior of promises. Try/catch blocks are a poor choice as lexical scopping is broken by its use, and the default throw behavior of awaited promises is highly undesirable in most situations. 
 
+
 #### Installation
 
 > npm i -s awaits-until
 
-### Usage
-#
+### Table of Contents
+  - [Until](#until)
 
 #### until
 params (1): a promise or an array of promises
@@ -255,3 +256,8 @@ Note: if no errors are present, err will be null.
   }()
 
 ```
+
+#### Promise pooling
+
+Promise pooling (aka concurrency controll) is available in two methods. sPool and pool, depending on the preferred use case.
+
