@@ -16,7 +16,7 @@ import {
 		handleSinglePromise,
 		handleMixedPromises,
 		handleMultiplePromises
-	} from './lib/handlePromises';
+	} from './dist/lib/handlePromises.js';
 
 // direct ts checking
 // import { until, s, zip, unzip, reduce, series, sAllSettled, pool, sPool } from './awaits';
@@ -173,7 +173,6 @@ describe('handlers', () => {
 			promises = promises.concat(['a', 'b']);
 			it('should resolve the promises, and return the values', async () => {
 				const resolution = await handleMixedPromises(promises);
-				console.log('reso', resolution)
 				expect(resolution.length).toEqual(2);
 				const [err, data] = resolution;
 				expect(Object.is(null, err)).toEqual(true);
