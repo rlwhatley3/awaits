@@ -157,7 +157,7 @@ note: on a promise getting rejected, the object will still get returned. The err
   }()
 ```
 
-#### series
+#### reduce
 
 This function resolves each returned promise or value from the given iterator function in series.
 Valid iterables are Arrays and Objects. Returned values will mirror the given iterable.
@@ -175,9 +175,11 @@ return: A tuple of [errs, data]. Both of equal shape to the provided iterable. I
 Note: if no errors are present, err will be null.
 
 ```
-  import { series } from 'awaits-until';
+  import { reduce } from 'awaits-until';
 
   async function go() {
+
+    // when no iterator is supplied, a default iterator function resolves the value
 
     let promiseA = new Promise((resolve, reject)) => { setTimeout(() => { return resolve('A') }, 10000) }
     let promiseB = new Promise((resolve, reject)) => { setTimeout(() => { return resolve('B') }, 5000) }
@@ -193,7 +195,7 @@ Note: if no errors are present, err will be null.
       E: promiseE
     };
 
-    let [errs, data] = await series(promiseObject);
+    let [errs, data] = await reduce(promiseObject);
 
     /*
       errs:
@@ -214,10 +216,32 @@ Note: if no errors are present, err will be null.
 
     */
 
+    // When an iterator method is supplied it modifies the values in series
+
+    let initializerValue = Promise.resolve({ 'pre-a': 0 });
+    let seriesData: any = {
+      'a': 1,
+      'b': 2,
+      'c': 3
+    }
+    let [err, data] = await reduce(seriesData, (value:any, key:any, lastReturnedValue:any) => {
+      return new Promise((resolve, reject) => { return resolve(value + 1) });
+    }, initializerValue);
+
+    /*
+      err: null
+      data: {
+        'a': 2,
+        'b': 3,
+        'c': 4
+      }
+
+    */
+
 
     let promiseArray = [promiseA, promiseB, promiseC, promiseD, promiseE];
 
-    let [errs, data] = await series(promiseArray);
+    let [errs, data] = await reduce(promiseArray);
 
     /*
       errs: [Error { E }]

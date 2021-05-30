@@ -1,6 +1,6 @@
 
 // build checking
-import { until, s, zip, unzip, series, sAllSettled, sPool, pool } from './dist/awaits.js'
+import { until, s, zip, unzip, reduce, sAllSettled, sPool, pool } from './dist/awaits.js'
 
 // direct ts checking
 // import { until, s, zip, unzip, series, sAllSettled } from './awaits';
@@ -76,8 +76,8 @@ describe('exported objects: ', () => {
 		expect(typeof unzip === 'function').toEqual(true);;
 	});
 
-	test('series should be a function', () => {
-		expect(typeof series === 'function').toEqual(true);
+	test('reduce should be a function', () => {
+		expect(typeof reduce === 'function').toEqual(true);
 	});
 });
 
@@ -305,17 +305,17 @@ describe('unzip: when passed an object with promises for values', () => {
 	});
 });
 
-describe('series', () => {
+describe('reduce', () => {
 	describe('with an object', () => {
-		it('should execute the given iterator in series', async () => {
+		it('should execute the given iterator in reduced series', async () => {
 			let initializerValue = Promise.resolve({ 'pre-a': 0 });
 			let seriesData: any = {
 				'a': 1,
 				'b': 2,
 				'c': 3
 			}
-			let [err, data] = await series(seriesData, (value:any, key:any, lastReturnedValue:any) => {
-				return Promise.resolve(value + 1);
+			let [err, data] = await reduce(seriesData, (value:any, key:any, lastReturnedValue:any) => {
+				return new Promise((resolve, reject) => { return resolve(value + 1) });
 			}, initializerValue);
 
 			for(let key in data) {
@@ -342,7 +342,7 @@ describe('series', () => {
 					'd': 4
 				}
 
-				let [err, data] = await series(seriesData, null);
+				let [err, data] = await reduce(seriesData, null);
 				for (let key in data) {
 					expect(data[key]).toEqual(seriesDataTest[key]);
 				}
@@ -359,7 +359,7 @@ describe('series', () => {
 					'b': 2,
 					'c': 3
 				}
-				let [errs, data] = await series(seriesData, (value:any, key:any, lastReturnedValue:any) => {
+				let [errs, data] = await reduce(seriesData, (value:any, key:any, lastReturnedValue:any) => {
 					return Promise.reject(value + 1);
 				}, initializerValue);
 
@@ -373,11 +373,11 @@ describe('series', () => {
 	});
 
 	describe('with an array', () => {
-		it('should execute the given array in series', async () => {
+		it('should execute the given array in reduced series', async () => {
 			let initializerValue = 'pre-a';
 			let initializerValuePromise = Promise.resolve(initializerValue);
 			let seriesData: any = ['a', 'b', 'c'];
-			let [err, data] = await series(seriesData, (value:any, index:any, accumulater:any) => {
+			let [err, data] = await reduce(seriesData, (value:any, index:any, accumulater:any) => {
 				if(index == 0) {
 					expect(accumulater).toEqual(initializerValue);
 				} else {
@@ -394,7 +394,7 @@ describe('series', () => {
 		describe('using the default function', () => {
 			it('should return the resolved values in order', async () => {
 				let seriesData: any = ['a', 'b', 'c', Promise.resolve('d')];
-				let [err, data] = await series(seriesData);
+				let [err, data] = await reduce(seriesData);
 
 				expect(Object.is(err, null)).toEqual(true);
 			});
@@ -405,7 +405,7 @@ describe('series', () => {
 				let initializerValue = 'pre-a';
 				let initializerValuePromise = Promise.resolve(initializerValue);
 				let seriesData: any = ['a', 'b', 'c'];
-				let [errs, data] = await series(seriesData, (value:any, index:any, accumulater:any) => {
+				let [errs, data] = await reduce(seriesData, (value:any, index:any, accumulater:any) => {
 					return Promise.reject(value + 1);
 				}, initializerValue);
 

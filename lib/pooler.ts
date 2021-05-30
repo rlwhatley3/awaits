@@ -128,7 +128,7 @@ class Pooler {
     this.run();
   }
 
-  complete(): Promise<any> {
+  complete(): Promise<[null | Error, any]> {
     if(this.failFastError) {
       this.primaryResolution([this.failFastError, null]);
     } else {
@@ -142,7 +142,7 @@ class Pooler {
     return this.primaryPromise;
   }
 
-  private isTrueGenerator(func: any): any {
+  private isTrueGenerator(func: any): boolean {
     const isGenerator = typeof func?.next == 'function' && 
                         typeof func[Symbol.iterator] == 'function';
 

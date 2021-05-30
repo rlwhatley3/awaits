@@ -3,7 +3,7 @@ import { handleErrsAndData } from './outputHandlers';
 import { s } from './until';
 
 export type Iiterator = (value: any, key: string | number, accumulator: any) => Promise<void | Iiterable>;
-export type Iseries = (iterable: Array<any> | { [key: string]: any | Array<any> }, iterator:Iiterator, initializerValue: Promise<any> | any ) => Promise<[null | Error, any]>;
+export type Ireduce = (iterable: Array<any> | { [key: string]: any | Array<any> }, iterator:Iiterator, initializerValue: Promise<any> | any ) => Promise<[null | Error, any]>;
 export type IiterableError = { [K in string | number]: Error | null }
 export type Iiterable = { [K in string | number]: any }
 
@@ -13,7 +13,7 @@ export type Iiterable = { [K in string | number]: any }
  * @param options - an object with 'err' and 'data' fields
  * @return a tuple of type [Error, any]
  */
-const defaultSeriesIterator:Iiterator = async function defaultSeriesIterator(value: any, key: string | number, accumulator: any): Promise<void | any> {
+const defaultReduceIterator:Iiterator = async function defaultReduceIterator(value: any, key: string | number, accumulator: any): Promise<void | any> {
   return await Promise.resolve(value);
 }
 
@@ -25,9 +25,9 @@ const defaultSeriesIterator:Iiterator = async function defaultSeriesIterator(val
  * @param initilizerValue - a value of any type that will be passed into the given funtion as the the first 'lastResolvedValue', defaults to null
  * @return a Promise which resolves to a tuple of type [ShapeofPassediterableAsErrors, ShapeofPassediterable]
  */                                                                                                 
-export async function series(iterable: Iiterable, iterator:Iiterator = null, initializerValue:any = null): Promise<[IiterableError, Iiterable]> {
+export async function reduce(iterable: Iiterable, iterator:Iiterator = null, initializerValue:any = null): Promise<[IiterableError, Iiterable]> {
   
-  if(!iterator) iterator = defaultSeriesIterator;
+  if(!iterator) iterator = defaultReduceIterator;
 
   let isArray:boolean = Array.isArray(iterable);
 

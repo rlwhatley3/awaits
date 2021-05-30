@@ -2,6 +2,7 @@
 export type IhandleData = (data: any) => [null, any];
 export type IhandleErr = (err: any) => [null | Error, null];
 export type IiterableError = { [K in string | number]: Error | null }
+
 /**
  * Wraps a given error and outputs the correct tuple
  * @param error of any type
