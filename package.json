@@ -8,6 +8,7 @@
     "prepublishOnly": "npm run build",
     "prepare": "npm run build",
     "test": "npm run build && jest",
+    "test-cli": "jest --coverage && coveralls < coverage/lcov.info",
     "build": "npm run clean && tsc",
     "clean": "rm -rf dist"
   },
@@ -21,17 +22,13 @@
     "async",
     "pool",
     "pooling",
-    "promise pooling",
     "concurrency",
-    "promise concurrency",
-    "concurrent promises",
     "promise",
-    "promises"
+    "promises",
     "utilities",
     "node",
     "microservices",
-    "tuple",
-    "promise tuple"
+    "tuple"
   ],
   "author": "raymond whatley",
   "license": "ISC",
@@ -43,6 +40,7 @@
     "@babel/plugin-transform-modules-commonjs": "^7.7.5",
     "@types/jest": "^24.0.23",
     "@types/node": "^12.12.14",
+    "coveralls": "^3.1.0",
     "jest": "^24.9.0",
     "ts-jest": "^24.2.0",
     "typescript": "^3.9.9"
