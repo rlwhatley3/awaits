@@ -26,7 +26,7 @@ I strongly feel that this _should_ be the default behavior of promises. Try/catc
   - [sAllSettled](#sAllSettled)
   - [Zip](#zip)
   - [Unzip](#unzip)
-  - [Redue](#reduce)
+  - [Reduce](#reduce)
   - [Pool](#pool)
   - [Spool](#spool)
 
